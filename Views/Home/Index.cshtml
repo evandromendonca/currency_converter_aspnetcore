@@ -1,34 +1,44 @@
 @{ ViewData["Title"] = "Home Page"; }
+
 <br/>
 <h1 align="center"> Currency converter </h1>
 <br/>
 <div class="jumbotron">
-    <form class="form-horizontal">
+    <form asp-action="Index" class="form-horizontal">
+        
         <div class="form-group">
             <label for="first_currency" class="col-md-1 control-label">From:</label>
             <div class="col-md-5">
-                <select class="selectpicker form-control" id="first_currency">
-                        <option>1</option>
-                    </select>
+                <select class="selectpicker form-control" name="first_currency">
+                    <option>BRL</option>
+                    <option>USD</option>
+                    <option>EUR</option>
+                </select>
             </div>
             <label for="second_currency" class="col-md-1 control-label">To:</label>
             <div class="col-md-5">
-                <select class="selectpicker form-control" id="second_currency">
-                    <option>1</option>
+                <select class="selectpicker form-control" name="second_currency">
+                    <option>BRL</option>
+                    <option>USD</option>
+                    <option>EUR</option>
                 </select>
             </div>
         </div>
+
         <div class="form-group" />
-        <label class="col-md-1 control-label">Amount:</label>
-        <div class="col-md-5">
-            <input type="text" class="form-control" placeholder="Testando" />
+            <label class="col-md-1 control-label">Amount:</label>
+            <div class="col-md-5">
+                <input type="text" name="amount" class="form-control" placeholder="Testando" />
+            </div>
+            <label class="col-md-1 control-label">-></label>
+            <div class="col-md-5">
+                <label id="result">@ViewBag.valorFinal</label>
+            </div>
         </div>
-        <label class="col-md-1 control-label">-></label>
-        <div class="col-md-5">
-            <input type="text" class="form-control" placeholder="Resultado" />
-        </div>
-</div>
-</form>
+
+        <button type="submit" class="btn btn-default">Convert</button>
+
+    </form>
 </div>
 
 
