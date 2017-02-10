@@ -6,10 +6,36 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CurrencyConverter.Controllers
 {
+    public class AjaxPostResponse
+    {
+        public string Message { get; set; }
+        public string Date { get; set; }
+    }
+
     public class HomeController : Controller
     {
+        public ActionResult AjaxView()
+        {
+
+            DateTime time = DateTime.Now;
+            return View("AjaxView", time);
+        }
+
         [HttpPost]
-        [ActionName("Index")]
+        public ActionResult AjaxPost(DateTime date)
+        {
+            AjaxPostResponse response = new AjaxPostResponse();
+            response.Date = date.ToString();
+
+            if (date <= DateTime.Now)
+                response.Message = "You entered a date the is less than now!";
+            else
+                response.Message = "You entered a date in the future!";
+
+            return Json(response);
+        }
+
+        [HttpPost]
         public ActionResult Convert()
         {
             //DateTime data = DateTime.Parse(Request.Form["convert_date"]);
@@ -35,11 +61,9 @@ namespace CurrencyConverter.Controllers
                     valor2 = Math.Round(decimal.Parse(a.Last()), 8);
             }
 
-            decimal valorFinal = Math.Round((amount/valor1) * valor2, 8);
+            var valorFinal = Math.Round((amount/valor1) * valor2, 4);
 
-            ViewBag.valorFinal = Math.Round(valorFinal, 4).ToString();
-
-            return View();
+            return Json(new { valorfinal = valorFinal});
         }
 
         [HttpGet]

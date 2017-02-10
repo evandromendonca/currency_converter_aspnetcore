@@ -1,0 +1,61 @@
+@model  DateTime
+@{
+    Layout = null;
+
+}
+ 
+This is the AjaxView! The time is @Html.TextBoxFor(m => m.Date)
+
+<!-- CONSULTA -->
+
+@{ Html.BeginForm("AjaxPost", "HomeController", FormMethod.Post, new { @id = "AjaxPostForm" }); }
+
+<div>
+    Hello From Index
+</div>
+
+<div id="ajaxPostContainer">
+</div>
+
+<!-- Div to hold the response to the AJAX Post -->
+<div id="ajaxPostMessage">
+</div>
+
+<input type="button" value="Submit" onclick="submitForm()" />
+
+@{ Html.EndForm(); }
+ 
+@section scripts
+{
+<script type="text/javascript">
+    $(function () {
+        loadAjaxView();
+    });
+
+    function loadAjaxView() {
+        $("#ajaxPostContainer").empty();
+        $("#ajaxPostContainer").load("/Home/AjaxView");
+    }
+
+    function submitForm() {
+            dataString = $("#AjaxPostForm").serialize();
+
+            $.ajax({
+                type: "POST",
+                url: "/Home/AjaxPost",
+                data: dataString,
+                cache: false,
+                dataType: "json",
+                success: function (data) {
+                    $("#ajaxPostMessage").empty();
+                    $("#ajaxPostMessage").html(data.message + " : " + data.date);
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    $("#ajaxPostMessage").empty();
+                    $("#ajaxPostMessage").html(XMLHttpRequest + "errrowww");
+                }
+            });
+            //loadAjaxView();
+    }
+</script>
+}

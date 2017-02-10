@@ -4,12 +4,12 @@
 <h1 align="center"> Currency converter </h1>
 <br/>
 <div class="jumbotron">
-    <form asp-action="Index" class="form-horizontal">
+    <form id="MyForm" asp-action="Index" class="form-horizontal">
         
         <div class="form-group">
             <label for="first_currency" class="col-md-1 control-label">From:</label>
             <div class="col-md-5">
-                <select class="selectpicker form-control" name="first_currency">
+                <select class="selectpicker form-control" id="first_currency" name="first_currency">
                     <option>BRL</option>
                     <option>USD</option>
                     <option>EUR</option>
@@ -17,7 +17,7 @@
             </div>
             <label for="second_currency" class="col-md-1 control-label">To:</label>
             <div class="col-md-5">
-                <select class="selectpicker form-control" name="second_currency">
+                <select class="selectpicker form-control" id="second_currency" name="second_currency">
                     <option>BRL</option>
                     <option>USD</option>
                     <option>EUR</option>
@@ -28,19 +28,52 @@
         <div class="form-group" />
             <label class="col-md-1 control-label">Amount:</label>
             <div class="col-md-5">
-                <input type="text" name="amount" class="form-control" placeholder="Testando" />
+                <input type="text" id="amount" name="amount" class="form-control" placeholder="Testando" />
             </div>
             <label class="col-md-1 control-label">-></label>
-            <div class="col-md-5">
-                <label id="result">@ViewBag.valorFinal</label>
+            <div id="final_value" class="col-md-5">
+                <label id="result"></label>
             </div>
         </div>
 
-        <button type="submit" class="btn btn-default">Convert</button>
+        <button type="submit" name="Submit" class="btn btn-default">Convert</button>
 
     </form>
 </div>
 
+@section scripts
+{
+<script type="text/javascript">
+
+$(document).ready(function () {
+        $("#MyForm").submit(function () {
+
+            var mydata = {
+                    first_currency: $("#first_currency").val(),
+                    second_currency: $("#second_currency").val(),
+                    amount: $("#amount").val(),
+                };
+
+            $.ajax({
+                type: "POST",
+                url: "/Home/Convert",
+                data: mydata,
+                cache: false,
+                dataType: "json",
+                success: function (result) {
+                    $("#result").empty();
+                    $("#result").html(result.valorfinal);
+                },
+                error: function (result) {
+                    alert("Failed");
+                }
+            });
+          return false;
+        });
+    });
+
+</script>
+}
 
 <!--
 <div id="myCarousel" class="carousel slide" data-ride="carousel" data-interval="6000">
