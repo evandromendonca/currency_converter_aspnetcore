@@ -41,8 +41,20 @@ namespace CurrencyConverter.Controllers
 
         [HttpPost]
         public ActionResult Convert([Bind("Date, First_currency, Second_currency, Amount")]ConvertVM cvm)
-        {            
-            decimal first_rate = 0, second_rate = 0;
+        {   
+            // declaring variables
+            decimal first_rate = 0, second_rate = 0, final_value = 0;
+
+            // check if amount is zero or if its the same currency
+            if (cvm.Amount == 0 || cvm.First_currency == cvm.Second_currency)
+                return Json(new { final_value = cvm.Amount});
+
+            // check if one of currencies is USD (USD is used as default reference currency)
+            if (cvm.First_currency == "USD") 
+                first_rate = 1;
+
+            if (cvm.Second_currency == "USD")
+                second_rate = 1;
 
             using (var db = new ApplicationDbContext())
             {
@@ -100,7 +112,7 @@ namespace CurrencyConverter.Controllers
             }
 
             // converting from first to second currency
-            var final_value = Math.Round((cvm.Amount/first_rate) * second_rate, 4);
+            final_value = Math.Round((cvm.Amount/first_rate) * second_rate, 4);
 
             return Json(new { final_value = final_value});
         }
