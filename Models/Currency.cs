@@ -11,6 +11,8 @@ namespace CurrencyConverter.Models
         public string Name { get; set; }
 
         public virtual List<CurrencyRate> CurrencyRates { get; set; }
+
+        public virtual List<CurrencyRate> CurrencyReferences { get; set; }
         
         public Currency()
         {

@@ -10,34 +10,9 @@ using Newtonsoft.Json;
 
 namespace CurrencyConverter.Controllers
 {
-    // public class AjaxPostResponse
-    // {
-    //     public string Message { get; set; }
-    //     public string Date { get; set; }
-    // }
-
     public class HomeController : Controller
     {
-        // public ActionResult AjaxView()
-        // {
-
-        //     DateTime time = DateTime.Now;
-        //     return View("AjaxView", time);
-        // }
-
-        // [HttpPost]
-        // public ActionResult AjaxPost(DateTime date)
-        // {
-        //     AjaxPostResponse response = new AjaxPostResponse();
-        //     response.Date = date.ToString();
-
-        //     if (date <= DateTime.Now)
-        //         response.Message = "You entered a date the is less than now!";
-        //     else
-        //         response.Message = "You entered a date in the future!";
-
-        //     return Json(response);
-        // }
+        private readonly ApplicationDbContext _context;
 
         [HttpPost]
         public ActionResult Convert([Bind("Date, First_currency, Second_currency, Amount")]ConvertVM cvm)
@@ -56,59 +31,57 @@ namespace CurrencyConverter.Controllers
             if (cvm.Second_currency == "USD")
                 second_rate = 1;
 
-            using (var db = new ApplicationDbContext())
+            // first verify if we have the rates in our database
+            if (_context.CurrenciesRates.Where(item => 
+                    item.Currency.Code == cvm.First_currency && item.Date == cvm.Date).Count() == 1)
+                first_rate = _context.CurrenciesRates.SingleOrDefault(item => 
+                                    item.Currency.Code == cvm.First_currency && item.Date == cvm.Date).Rate;
+
+            if (_context.CurrenciesRates.Where(item => 
+                    item.Currency.Code == cvm.Second_currency && item.Date == cvm.Date).Count() == 1)
+                second_rate = _context.CurrenciesRates.SingleOrDefault(item => 
+                                    item.Currency.Code == cvm.Second_currency && item.Date == cvm.Date).Rate;                                                
+
+            // if I did not found the quotes, try to get it online
+            if (first_rate == 0 || second_rate == 0)
             {
-                // first verify if we have the rates in our database
-                if (db.CurrenciesRates.Where(item => 
-                        item.Currency.Code == cvm.First_currency && item.Date == cvm.Date).Count() == 1)
-                    first_rate = db.CurrenciesRates.SingleOrDefault(item => 
-                                        item.Currency.Code == cvm.First_currency && item.Date == cvm.Date).Rate;
+                // get the rates from fixer
+                HttpClient hc = new HttpClient();
+                string response = hc.GetStringAsync($"http://api.fixer.io/{cvm.Date.ToString("yyyy-MM-dd")}?base=USD").Result;
 
-                if (db.CurrenciesRates.Where(item => 
-                        item.Currency.Code == cvm.Second_currency && item.Date == cvm.Date).Count() == 1)
-                    second_rate = db.CurrenciesRates.SingleOrDefault(item => 
-                                        item.Currency.Code == cvm.Second_currency && item.Date == cvm.Date).Rate;                                                
-
-                // if I did not found the quotes, try to get it online
-                if (first_rate == 0 || second_rate == 0)
+                // get the values of the rates for the selected day
+                var values = JsonConvert.DeserializeObject<Dictionary<string, string>>(
+                                JsonConvert.DeserializeObject<Dictionary<string, object>>(response)["rates"].ToString());
+                
+                // for each value, make a insert in the database
+                foreach(var value in values)
                 {
-                    // get the rates from fixer
-                    HttpClient hc = new HttpClient();
-                    string response = hc.GetStringAsync($"http://api.fixer.io/{cvm.Date.ToString("yyyy-MM-dd")}?base=USD").Result;
+                    Currency currency = _context.Currencies.SingleOrDefault(o => o.Code == value.Key);
+                    decimal rate = 0;
 
-                    // get the values of the rates for the selected day
-                    var values = JsonConvert.DeserializeObject<Dictionary<string, string>>(
-                                    JsonConvert.DeserializeObject<Dictionary<string, object>>(response)["rates"].ToString());
-                    
-                    // for each value, make a insert in the database
-                    foreach(var value in values)
+                    // check if the currency exists, if not, add new
+                    if (currency == null)
                     {
-                        Currency currency = db.Currencies.SingleOrDefault(o => o.Code == value.Key);
-                        decimal rate = 0;
-
-                        // check if the currency exists, if not, add new
-                        if (currency == null)
-                        {
-                            currency = new Currency() { Code = value.Key };
-                            db.Currencies.Add(currency);
-                        }
-
-                        // check if the rate exists, if not, add new
-                        if (!db.CurrenciesRates.Any(o => o.Currency.Code == value.Key && o.Date == cvm.Date))
-                        {
-                            rate = decimal.Parse(value.Value);
-                            db.CurrenciesRates.Add(new CurrencyRate() { Date = cvm.Date, Rate = rate, Currency = currency});
-                        }
-
-                        // if these rates are those that we need, store them
-                        if (value.Key == cvm.First_currency)
-                            first_rate = rate;
-                        else if (value.Key == cvm.Second_currency)
-                            second_rate = rate;
+                        currency = new Currency() { Code = value.Key };
+                        _context.Currencies.Add(currency);
                     }
 
-                    db.SaveChanges();
+                    // check if the rate exists, if not, add new
+                    if (!_context.CurrenciesRates.Any(o => o.Currency.Code == value.Key && o.Date == cvm.Date))
+                    {
+                        rate = decimal.Parse(value.Value);
+                        _context.CurrenciesRates.Add(new CurrencyRate() { Date = cvm.Date, Rate = rate, Currency = currency});
+                    }
+
+                    // if these rates are those that we need, store them
+                    if (value.Key == cvm.First_currency)
+                        first_rate = rate;
+                    else if (value.Key == cvm.Second_currency)
+                        second_rate = rate;
                 }
+
+                _context.SaveChanges();
+            
             }
 
             // converting from first to second currency
@@ -126,30 +99,5 @@ namespace CurrencyConverter.Controllers
 
             return View(cvm);
         }
-
-        // public IActionResult About()
-        // {
-        //     ViewData["Message"] = "Your application description page.";
-
-        //     if (!string.IsNullOrWhiteSpace(TempData["valorFinal"].ToString()))
-        //     {
-        //           ViewBag["result"] = TempData["valorFinal"];
-        //           //and use you viewbag data in the view
-        //     }
-
-        //     return View();
-        // }
-
-        // public IActionResult Contact()
-        // {
-        //     ViewData["Message"] = "Your contact page.";
-
-        //     return View();
-        // }
-
-        // public IActionResult Error()
-        // {
-        //     return View();
-        // }
     }
 }

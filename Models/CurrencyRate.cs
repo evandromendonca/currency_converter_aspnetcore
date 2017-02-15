@@ -10,7 +10,11 @@ namespace CurrencyConverter.Models
 
         public int CurrencyId { get; set; }
 
+        public int ReferenceCurrencyId { get; set; }
+
         public virtual Currency Currency { get; set; }
+
+        public virtual Currency ReferenceCurrency { get; set; }
 
         public CurrencyRate()
         {
