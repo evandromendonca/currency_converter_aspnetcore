@@ -25,7 +25,7 @@ namespace CurrencyConverter
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var connection = @"Server=localhost;Port=5432;Database=CurrencyConverterDB;User Id=postgres;Password=houais1530;";
+            var connection = @"Server=localhost;Port=5432;Database=CurrencyConverterDB;User Id=postgres;Password=postgres;";
             services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connection));
 
             // Add framework services.
